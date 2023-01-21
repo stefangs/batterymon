@@ -8,6 +8,10 @@ void setup() {
   pinMode(A0, INPUT);
   digitalWrite(0, LOW);
   pinMode(0, OUTPUT);
+  digitalWrite(1, LOW);
+  pinMode(1, OUTPUT);
+  digitalWrite(2, LOW);
+  pinMode(2, OUTPUT);
   Serial.begin(115200);
 }
 
@@ -19,12 +23,22 @@ char readInput() {
 }
 
 void readAnalogValue(char* in) {
-  int value = analogRead (A0);
+  char pin = in[1] - '0';
+  if ((pin < 0) || (pin > 4)) {
+    Serial.println("Bad pin");
+    return;
+  }  
+  int value = analogRead (A0 + pin);
   Serial.println(value);
 }
 
 void writeDigitalValue(char* in) {
-  digitalWrite(0, (in[2] == '1') ? HIGH : LOW);
+  char pin = in[1] - '0';
+  if ((pin < 0) || (pin > 7)) {
+    Serial.println("Bad pin");
+    return;
+  }
+  digitalWrite(pin, (in[2] == '1') ? HIGH : LOW);
   Serial.println(in);
 }
 
