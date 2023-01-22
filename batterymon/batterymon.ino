@@ -1,18 +1,19 @@
 
 
+#include "slot.h"
+
+#define MINUTE_IN_MS (60000)
+#define LOAD_PAUSE (200)
 #define INPUT_BUFFER_SIZE 20
 
 static char inputBuffer[INPUT_BUFFER_SIZE];
 
+Slot slot0(2, A0);
+
 void setup() {
-  pinMode(A0, INPUT);
-  digitalWrite(0, LOW);
-  pinMode(0, OUTPUT);
-  digitalWrite(1, LOW);
-  pinMode(1, OUTPUT);
-  digitalWrite(2, LOW);
-  pinMode(2, OUTPUT);
   Serial.begin(115200);
+  slot0.addLoad();
+  delay(1000);
 }
 
 char readInput() {
@@ -43,6 +44,21 @@ void writeDigitalValue(char* in) {
 }
 
 void loop() {
+  int loaded = slot0.voltage();
+  slot0.removeLoad();
+  delay(LOAD_PAUSE);
+  int unloaded = slot0.voltage();
+  slot0.addLoad();
+  Serial.print(millis() / MINUTE_IN_MS);
+  Serial.print(',');  
+  Serial.print(loaded);
+  Serial.print(',');
+  Serial.println(unloaded);
+  delay(MINUTE_IN_MS - LOAD_PAUSE);
+}
+
+
+void loop2() {
   char size = readInput();
   if (inputBuffer[0] == 'A' && size >= 2) {
     readAnalogValue(&inputBuffer[0]);
