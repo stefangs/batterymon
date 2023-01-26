@@ -1,17 +1,30 @@
 
+#include "discharger.h"
 
-
-
-void Discharger::Discharger() : state(idle){
+void Discharger::Discharger(Slot& slot) : state(idle), slot(slot){
 }
 
 void Discharger::loop() {
   switch (state) {
     case idle:
-      handleIdle();
+      idle();
       break;
     case discharging:
-      handleDischarging()
+      discharge();
       break;
   }
+}
+
+void
+Discharger::idle(){
+    if (slot0.voltage() > 1100) {
+      slot0.addLoad();
+      delay(LOAD_PAUSE);
+      isDischarging = true;
+      startTime = millis();
+    }
+}
+
+void
+Discharger::discharge(){
 }
