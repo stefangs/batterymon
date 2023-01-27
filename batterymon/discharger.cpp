@@ -4,6 +4,7 @@
 
 #define LOAD_PAUSE (200)
 #define MINUTE_IN_MS (60000)
+#define SAMPLE_TIME_IN_MS (60000)
 
 Discharger::Discharger(Slot& slot) : state(idle), slot(slot){
 }
@@ -39,28 +40,35 @@ Discharger::doIdle(){
     Serial.println(loadVoltage * 10 / 33);
     state = discharging;
     startTime = millis();
+    nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
   }
 }
 
 void
 Discharger::doDischarge(){
   int loaded = slot.voltage();
-  slot.removeLoad();
-  delay(LOAD_PAUSE);
-  int unloaded = slot.voltage();
-  Serial.print((millis() - startTime) / MINUTE_IN_MS);
-  Serial.print(',');  
-  Serial.print(loaded);
-  Serial.print(',');
-  Serial.print(unloaded);
-  Serial.print(',');
-  Serial.println(loaded * 10 / 33);
-  if ((unloaded < 850) || (loaded < 100)) {
+  if (loaded < 100) {
+    slot.removeLoad();
     Serial.println("Discharing stopped");
     state = ended;
-  } else {
-    slot.addLoad();
-    delay(10000 - LOAD_PAUSE);
+  } else if (millis() > nextSampleTime) {
+    slot.removeLoad();
+    delay(LOAD_PAUSE);
+    int unloaded = slot.voltage();
+    Serial.print((millis() - startTime) / MINUTE_IN_MS);
+    Serial.print(',');
+    Serial.print(loaded);
+    Serial.print(',');
+    Serial.print(unloaded);
+    Serial.print(',');
+    Serial.println(loaded * 10 / 33);
+    nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
+    if (unloaded < 850) {
+      Serial.println("Discharing stopped");
+      state = ended;
+    } else {
+      slot.addLoad();
+    }
   }
 }
 

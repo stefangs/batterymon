@@ -14,4 +14,5 @@ class Discharger {
    Slot& slot;
    enum State {idle, discharging, ended} state;
    long startTime;
+   long nextSampleTime;
 };
