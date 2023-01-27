@@ -3,14 +3,15 @@
 
 class Discharger {
  public:
-   Discharger(Slot& slot)
+   Discharger(Slot& slot);
    void loop();
 
  private:
-   void idle();
-   void discharge();
+   void doIdle();
+   void doDischarge();
+   void doEnded();
 
-   Slot& slot
-   enum State {idle, discharging} state;
+   Slot& slot;
+   enum State {idle, discharging, ended} state;
    long startTime;
-}
+};
