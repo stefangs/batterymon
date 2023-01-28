@@ -1,10 +1,13 @@
 
 #include <Arduino.h>
 #include "discharger.h"
+#include "serialreporter.h"
 
 #define LOAD_PAUSE (200)
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME_IN_MS (60000)
+
+SerialReporter reporter;
 
 Discharger::Discharger(Slot& slot) : state(idle), slot(slot){
 }
@@ -28,16 +31,10 @@ Discharger::doIdle(){
   if (slot.voltage() > 1100) {
     delay(LOAD_PAUSE);
     int idleVoltage = slot.voltage();
-    Serial.println("*Starting discharge*");
-    Serial.print("Start voltage: ");  
-    Serial.println(idleVoltage);
     slot.addLoad();
     delay(LOAD_PAUSE);
     int loadVoltage = slot.voltage();
-    Serial.print("Load voltage: ");  
-    Serial.println(loadVoltage);
-    Serial.print("Current: ");  
-    Serial.println(loadVoltage * 10 / 33);
+    reporter.reportStart(idleVoltage, loadVoltage, loadVoltage * 10 / 33);
     state = discharging;
     startTime = millis();
     mA_Minutes = 0;
@@ -60,15 +57,7 @@ Discharger::doDischarge(){
     slot.removeLoad();
     delay(LOAD_PAUSE);
     int unloaded = slot.voltage();
-    Serial.print((millis() - startTime) / MINUTE_IN_MS);
-    Serial.print(',');
-    Serial.print(loaded);
-    Serial.print(',');
-    Serial.print(unloaded);
-    Serial.print(',');
-    Serial.print(current);
-    Serial.print(',');
-    Serial.println(mA_Minutes/60);
+    reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes/60);
     nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
     if (unloaded < 850) {
       Serial.println("Discharing stopped");
