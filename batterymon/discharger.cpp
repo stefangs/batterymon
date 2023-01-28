@@ -40,6 +40,7 @@ Discharger::doIdle(){
     Serial.println(loadVoltage * 10 / 33);
     state = discharging;
     startTime = millis();
+    mA_Minutes = 0;
     nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
   }
 }
@@ -48,10 +49,14 @@ void
 Discharger::doDischarge(){
   int loaded = slot.voltage();
   if (loaded < 100) {
+    int current = loaded * 10 / 33;
+    mA_Minutes += current;
     slot.removeLoad();
     Serial.println("Discharing stopped");
     state = ended;
   } else if (millis() > nextSampleTime) {
+    int current = loaded * 10 / 33;
+    mA_Minutes += current;
     slot.removeLoad();
     delay(LOAD_PAUSE);
     int unloaded = slot.voltage();
@@ -61,7 +66,9 @@ Discharger::doDischarge(){
     Serial.print(',');
     Serial.print(unloaded);
     Serial.print(',');
-    Serial.println(loaded * 10 / 33);
+    Serial.print(current);
+    Serial.print(',');
+    Serial.println(mA_Minutes/60);
     nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
     if (unloaded < 850) {
       Serial.println("Discharing stopped");
@@ -76,6 +83,6 @@ void
 Discharger::doEnded(){
   if (slot.voltage() < 10) {
     state = idle;
-    Serial.println("Waiting for battery");  
+    Serial.println("Waiting for battery");
   }
 }

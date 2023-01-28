@@ -15,4 +15,5 @@ class Discharger {
    enum State {idle, discharging, ended} state;
    long startTime;
    long nextSampleTime;
+   long mA_Minutes;
 };
