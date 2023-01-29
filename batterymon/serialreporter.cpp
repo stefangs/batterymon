@@ -27,3 +27,13 @@ SerialReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int un
   Serial.print(',');
   Serial.println(mAh);
 }
+
+void
+SerialReporter::reportEnd() {
+  Serial.println("Discharing stopped");
+}
+
+void
+SerialReporter::reportWaiting() {
+  Serial.println("Waiting for battery");
+}

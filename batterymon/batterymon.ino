@@ -1,15 +1,12 @@
 
 
 #include "discharger.h"
-
-#define MINUTE_IN_MS (60000)
-#define LOAD_PAUSE (200)
+#include "slot.h"
+#include "serialreporter.h"
 
 Slot slot0(2, A0);
-Discharger discharger0(slot0);
-
-bool isDischarging = false;
-long startTime = 0;
+SerialReporter reporter;
+Discharger discharger0(slot0, reporter);
 
 void setup() {
   Serial.begin(115200);

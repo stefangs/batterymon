@@ -2,14 +2,13 @@
 #include <Arduino.h>
 #include "discharger.h"
 #include "serialreporter.h"
+#include "slot.h"
 
 #define LOAD_PAUSE (200)
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME_IN_MS (60000)
 
-SerialReporter reporter;
-
-Discharger::Discharger(Slot& slot) : state(idle), slot(slot){
+Discharger::Discharger(Slot& slot, SerialReporter& reporter) : state(idle), slot(slot), reporter(reporter){
 }
 
 void Discharger::loop() {
@@ -49,7 +48,7 @@ Discharger::doDischarge(){
     int current = loaded * 10 / 33;
     mA_Minutes += current;
     slot.removeLoad();
-    Serial.println("Discharing stopped");
+    reporter.reportEnd();
     state = ended;
   } else if (millis() > nextSampleTime) {
     int current = loaded * 10 / 33;
@@ -60,7 +59,7 @@ Discharger::doDischarge(){
     reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes/60);
     nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
     if (unloaded < 850) {
-      Serial.println("Discharing stopped");
+      reporter.reportEnd();
       state = ended;
     } else {
       slot.addLoad();

@@ -1,9 +1,10 @@
 
-#include "slot.h"
+class Slot;
+class SerialReporter;
 
 class Discharger {
  public:
-   Discharger(Slot& slot);
+   Discharger(Slot& slot, SerialReporter& reporter);
    void loop();
 
  private:
@@ -12,6 +13,7 @@ class Discharger {
    void doEnded();
 
    Slot& slot;
+   SerialReporter& reporter;
    enum State {idle, discharging, ended} state;
    long startTime;
    long nextSampleTime;
