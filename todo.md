@@ -5,6 +5,6 @@
 * Store samples in eeprom
 * Print samples from eeprom
 
-#Done
+# Done
 * Report mAh
 * Reporter class
