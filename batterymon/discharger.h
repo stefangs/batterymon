@@ -1,10 +1,10 @@
 
 class Slot;
-class SerialReporter;
+class Reporter;
 
 class Discharger {
  public:
-   Discharger(Slot& slot, SerialReporter& reporter);
+   Discharger(Slot& slot, Reporter& reporter);
    void loop();
 
  private:
@@ -13,7 +13,7 @@ class Discharger {
    void doEnded();
 
    Slot& slot;
-   SerialReporter& reporter;
+   Reporter& reporter;
    enum State {idle, discharging, ended} state;
    long startTime;
    long nextSampleTime;

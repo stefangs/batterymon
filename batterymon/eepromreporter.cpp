@@ -1,9 +1,10 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 #include "eepromreporter.h"
+#include "serialreporter.h"
 
 #define MINUTE_IN_MS (60000)
-#define SAMPLE_TIME (60000 * 2)
+#define SAMPLE_TIME (60000)
 
 struct Sample {
   unsigned int loadedVoltage : 11;
@@ -24,16 +25,34 @@ EEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int un
     sample.loadedVoltage = loadedVoltage;
     sample.unloadedVoltage = unloadedVoltage;
     EEPROM.put(slot * sizeof(Sample), sample);
-    slot++;
+    if ((slot + 2) * sizeof(Sample) < EEPROM.length()) {
+      slot++;      
+    }
     sample.unloadedVoltage = 0;
     EEPROM.put(slot * sizeof(Sample), sample);
   }
 }
 
 void
-EEPromReporter::reportEnd() {
+EEPromReporter::reportEnd(int mAh) {
 }
 
 void
 EEPromReporter::reportWaiting() {
+}
+
+void 
+EEPromReporter::printReport() {
+  int readSlot = 0;
+  long time = 0;
+  SerialReporter reporter;
+  EEPROM.get(0, sample);
+  Serial.println("*Start report*");
+  while (sample.unloadedVoltage != 0) {
+    reporter.reportSample(time, sample.loadedVoltage, sample.unloadedVoltage, sample.loadedVoltage * 10 / 33, 0);
+    time += SAMPLE_TIME;
+    readSlot += sizeof(Sample);
+    EEPROM.get(readSlot, sample);
+  }
+  Serial.println("*End report*");
 }

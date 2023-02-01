@@ -29,7 +29,7 @@ SerialReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int un
 }
 
 void
-SerialReporter::reportEnd() {
+SerialReporter::reportEnd(int mAh) {
   Serial.println("Discharing stopped");
 }
 

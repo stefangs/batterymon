@@ -1,10 +1,13 @@
 
-class EEPromReporter {
+#include "reporter.h"
+
+class EEPromReporter : public Reporter {
   public:
     void reportStart(int startVoltage, int loadVoltage, int current);
     void reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh);
-    void reportEnd();
+    void reportEnd(int mAh);
     void reportWaiting();
+    void printReport();
   private:
     int slot;
     long nextSample;
