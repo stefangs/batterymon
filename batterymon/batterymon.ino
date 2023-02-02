@@ -5,7 +5,7 @@
 #include "eepromreporter.h"
 #include "doublereporter.h"
 
-Slot slot0(2, A0);
+Slot slot0(2, A0, 3, 4);
 SerialReporter sreporter;
 EEPromReporter  ereporter;
 DoubleReporter dreporter(sreporter, ereporter);

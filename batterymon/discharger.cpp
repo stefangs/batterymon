@@ -43,6 +43,7 @@ Discharger::doIdle(){
 
 void
 Discharger::doDischarge(){
+  slot.setGreenLED(true);
   int loaded = slot.voltage();
   if (loaded < 100) {
     int current = loaded * 10 / 33;
@@ -51,6 +52,7 @@ Discharger::doDischarge(){
     reporter.reportEnd(mA_Minutes / 60);
     state = ended;
   } else if (millis() > nextSampleTime) {
+    slot.setRedLED(true);
     int current = loaded * 10 / 33;
     mA_Minutes += current;
     slot.removeLoad();
@@ -58,6 +60,7 @@ Discharger::doDischarge(){
     int unloaded = slot.voltage();
     reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes/60);
     nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
+    slot.setRedLED(false);
     if (unloaded < 850) {
       reporter.reportEnd(mA_Minutes / 60);
       state = ended;
@@ -69,6 +72,7 @@ Discharger::doDischarge(){
 
 void
 Discharger::doEnded(){
+  slot.setGreenLED(false);
   if (slot.voltage() < 10) {
     delay(500);
     state = idle;
