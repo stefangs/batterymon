@@ -1,14 +1,12 @@
 
 #include <Arduino.h>
 #include "slot.h"
+#include "led.h"
 
-Slot::Slot(char relayPin, char voltagePin, char greenLEDPin, char redLEDPin) : relayPin(relayPin), voltagePin(voltagePin), greenLEDPin(greenLEDPin), redLEDPin(redLEDPin){
+Slot::Slot(char relayPin, char voltagePin, char greenLEDPin, char redLEDPin) : relayPin(relayPin), voltagePin(voltagePin), 
+  greenLED(greenLEDPin), redLED(redLEDPin){
   digitalWrite(relayPin, LOW);
-  digitalWrite(greenLEDPin, LOW);
-  digitalWrite(redLEDPin, LOW);
   pinMode(relayPin, OUTPUT);
-  pinMode(greenLEDPin, OUTPUT);
-  pinMode(redLEDPin, OUTPUT);
   pinMode(voltagePin, INPUT);
 }
 
@@ -24,10 +22,18 @@ void Slot::removeLoad(){
   digitalWrite(relayPin, LOW);
 }
 
-void Slot::setGreenLED(boolean isOn){
-  digitalWrite(greenLEDPin, isOn ? HIGH : LOW);
+Led& 
+Slot::getRedLED(){
+  return redLED;
 }
 
-void Slot::setRedLED(boolean isOn){
-  digitalWrite(redLEDPin, isOn ? HIGH : LOW);
+Led& 
+Slot::getGreenLED(){
+  return greenLED;
+}
+
+void
+Slot::loop(){
+  greenLED.loop();
+  redLED.loop();
 }
