@@ -42,29 +42,35 @@ Discharger::doIdle() {
     mA_Minutes = 0;
     nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
     slot.getGreenLED().off();
-    slot.getRedLED().blinkOn(1000, loadCurrent / 5);
+    slot.getRedLED().blinkOn(400, 50);
+    slot.getRedLED().blinkCount(loadCurrent/100 + 1);
   }
 }
 
+inline bool isBatteryRemoved(int voltage) {
+  return voltage < 100;
+}
+
+inline bool isTimeForNextSample(long nextSampleTime) {
+  return millis() > nextSampleTime;
+}
+ 
 void
 Discharger::doDischarge() {
   int loaded = slot.voltage();
-  if (loaded < 100) {
-    int current = loaded * 10 / 33;
-    mA_Minutes += current;
+  if (isBatteryRemoved(loaded)) {
     slot.removeLoad();
     reporter.reportEnd(mA_Minutes / 60);
     state = ended;
-  } else if (millis() > nextSampleTime) {
+  } else if (isTimeForNextSample(nextSampleTime)) {
     int current = loaded * 10 / 33;
-    slot.getRedLED().blinkOn(1000, current / 5);
+    slot.getRedLED().blinkCount(current/100 + 1);
     mA_Minutes += current;
     slot.removeLoad();
     delay(LOAD_PAUSE);
     int unloaded = slot.voltage();
     reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes / 60);
     nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
-    slot.getRedLED().off();
     if (unloaded < 850) {
       reporter.reportEnd(mA_Minutes / 60);
       state = ended;

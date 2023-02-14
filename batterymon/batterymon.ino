@@ -14,6 +14,7 @@ Discharger discharger0(slot0, dreporter);
 void setup() {
   Serial.begin(115200);
   ereporter.printReport();
+
 }
 
 void loop() {

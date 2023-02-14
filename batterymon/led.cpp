@@ -31,10 +31,23 @@ Led::blinkOff(){
 }
 
 void 
+Led::blinkCount(char count) {
+  this->count = count;
+}
+
+inline bool 
+Led::isBlinkCountOn() {
+  if (count == 0) {
+    return false;
+  }
+  return (millis() % (periodMs * 8)) > periodMs * count;
+}
+
+void 
 Led::loop() {
   if (periodMs > 0) {
     int DutyCycleCutoff = (periodMs * dutyPercentage) / 100;
-    if ((millis() % periodMs) < DutyCycleCutoff) {
+    if (((millis() % periodMs) < DutyCycleCutoff) || isBlinkCountOn()) {
       digitalWrite(pin, HIGH);
     } else {
       digitalWrite(pin, LOW);
