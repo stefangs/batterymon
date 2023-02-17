@@ -8,12 +8,15 @@
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME_IN_MS (60000)
 
-Discharger::Discharger(Slot& slot, Reporter& reporter) : state(idle), slot(slot), reporter(reporter) {
+Discharger::Discharger(Slot& slot, Reporter& reporter) : state(initial), slot(slot), reporter(reporter) {
 }
 
 void Discharger::loop() {
   slot.loop();
   switch (state) {
+    case initial:
+      doInitial();
+      break;
     case idle:
       doIdle();
       break;
@@ -26,10 +29,36 @@ void Discharger::loop() {
   }
 }
 
+inline bool isBatteryPresent(int voltage) {
+  return voltage > 1100;
+}
+
+void
+Discharger::doInitial() {
+  if (isBatteryPresent(slot.voltage())) {
+    // Battery already in, resume dischare
+    reporter.reportResume(slot.voltage());
+    nextSampleTime = millis() + SAMPLE_TIME_IN_MS;
+    slot.addLoad();
+    delay(LOAD_PAUSE);
+    int loadVoltage = slot.voltage();
+    int loadCurrent = loadVoltage * 10 / 33;
+    state = discharging;
+    startTime = millis();
+    mA_Minutes = 0;
+    nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
+    slot.getGreenLED().off();
+    slot.getRedLED().blinkOn(400, 50);
+    slot.getRedLED().blinkCount(loadCurrent/100);
+  } else {
+    state = idle;
+  }
+}
+
 void
 Discharger::doIdle() {
   slot.getGreenLED().on();
-  if (slot.voltage() > 1100) {
+  if (isBatteryPresent(slot.voltage())) {
     delay(LOAD_PAUSE);
     int idleVoltage = slot.voltage();
     slot.addLoad();
@@ -43,7 +72,7 @@ Discharger::doIdle() {
     nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
     slot.getGreenLED().off();
     slot.getRedLED().blinkOn(400, 50);
-    slot.getRedLED().blinkCount(loadCurrent/100 + 1);
+    slot.getRedLED().blinkCount(loadCurrent/100);
   }
 }
 

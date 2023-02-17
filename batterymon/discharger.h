@@ -8,13 +8,14 @@ class Discharger {
    void loop();
 
  private:
+   void doInitial();
    void doIdle();
    void doDischarge();
    void doEnded();
 
    Slot& slot;
    Reporter& reporter;
-   enum State {idle, discharging, ended} state;
+   enum State {initial, idle, discharging, ended} state;
    long startTime;
    long nextSampleTime;
    long mA_Minutes;

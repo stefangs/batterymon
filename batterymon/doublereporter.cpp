@@ -4,6 +4,13 @@
 DoubleReporter::DoubleReporter(Reporter& reporter1, Reporter& reporter2) : reporter1(reporter1), reporter2(reporter2){ 
 }
 
+
+void 
+DoubleReporter::reportResume(int startVoltage) {
+  reporter1.reportResume(startVoltage);
+  reporter2.reportResume(startVoltage);
+}
+
 void
 DoubleReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   reporter1.reportStart(startVoltage, loadVoltage, current);

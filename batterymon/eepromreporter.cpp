@@ -12,6 +12,18 @@ struct Sample {
 } sample;
 
 void
+EEPromReporter::reportResume(int startVoltage) {
+  nextSample = millis() + SAMPLE_TIME;
+  slot = 0;
+  EEPROM.get(0, sample);
+  // Find next free slot (or the last)
+  while (((slot + 2) * sizeof(Sample) < EEPROM.length()) && sample.unloadedVoltage != 0) {
+    slot++;
+    EEPROM.get(slot * sizeof(Sample), sample);
+  }
+}
+
+void
 EEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   slot = 0;
   nextSample = millis();

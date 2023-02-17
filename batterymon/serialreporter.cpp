@@ -5,6 +5,13 @@
 #define MINUTE_IN_MS (60000)
 
 void
+SerialReporter::reportResume(int startVoltage) {
+  Serial.println("*Resuming discharge*");
+  Serial.print("Start voltage: ");
+  Serial.println(startVoltage);
+}
+ 
+void
 SerialReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   Serial.println("*Starting discharge*");
   Serial.print("Start voltage: ");
