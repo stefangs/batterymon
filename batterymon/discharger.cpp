@@ -93,7 +93,7 @@ Discharger::doDischarge() {
     state = ended;
   } else if (isTimeForNextSample(nextSampleTime)) {
     int current = loaded * 10 / 33;
-    slot.getRedLED().blinkCount(current/100 + 1);
+    slot.getRedLED().blinkCount(current/100);
     mA_Minutes += current;
     slot.removeLoad();
     delay(LOAD_PAUSE);
