@@ -58,13 +58,63 @@ EEPromReporter::printReport() {
   int readSlot = 0;
   long time = 0;
   SerialReporter reporter;
-  EEPROM.get(0, sample);
+  int maxLoadedVoltage = 0;
+  int minLoadedVoltage = 2000;
+  int maxUnloadedVoltage = 0;
+  int minUnloadedVoltage = 2000;
+  int maxCurrent = 0;
+  int minCurrent = 2000;
+  int mAMinutes = 0;
+  long joule = 0;
+  
   Serial.println("*Start report*");
+  EEPROM.get(0, sample);
   while (sample.unloadedVoltage != 0) {
-    reporter.reportSample(time, sample.loadedVoltage, sample.unloadedVoltage, sample.loadedVoltage * 10 / 33, 0);
+    int current = sample.loadedVoltage * 10 / 33;
+    maxLoadedVoltage = max(maxLoadedVoltage, sample.loadedVoltage);
+    minLoadedVoltage = min(minLoadedVoltage, sample.loadedVoltage);
+    maxUnloadedVoltage = max(maxUnloadedVoltage, sample.unloadedVoltage);
+    minUnloadedVoltage = min(minUnloadedVoltage, sample.unloadedVoltage);
+    maxCurrent = max(maxCurrent, current);
+    minCurrent = min(minCurrent, current);
+    mAMinutes += current;
+    joule += (sample.loadedVoltage * current * 60L)  / 1000L;
+    reporter.reportSample(time, sample.loadedVoltage, sample.unloadedVoltage, current, 0);
     time += SAMPLE_TIME;
     readSlot += sizeof(Sample);
     EEPROM.get(readSlot, sample);
   }
+  Serial.print("Max loaded voltage: ");
+  Serial.print(maxLoadedVoltage);
+  Serial.println(" mV");
+
+  Serial.print("Min loaded voltage: ");
+  Serial.print(minLoadedVoltage);
+  Serial.println(" mV");
+
+  Serial.print("Max unloaded voltage: ");
+  Serial.print(maxUnloadedVoltage);
+  Serial.println(" mV");
+
+  Serial.print("Min unloaded voltage: ");
+  Serial.print(minUnloadedVoltage);
+  Serial.println(" mV");
+
+  Serial.print("Max current: ");
+  Serial.print(maxCurrent);
+  Serial.println(" mA");
+  
+  Serial.print("Min current: ");
+  Serial.print(minCurrent);
+  Serial.println(" mA");
+
+  Serial.print("Charge: ");
+  Serial.print(mAMinutes / 60);
+  Serial.println(" mAh");
+
+  Serial.print("Energy: ");
+  Serial.print(joule / 1000);
+  Serial.println(" J");
+
   Serial.println("*End report*");
 }
