@@ -64,7 +64,7 @@ EEPromReporter::printReport() {
   int minUnloadedVoltage = 2000;
   int maxCurrent = 0;
   int minCurrent = 2000;
-  int mAMinutes = 0;
+  long mAMinutes = 0;
   long joule = 0;
   
   Serial.println("*Start report*");
