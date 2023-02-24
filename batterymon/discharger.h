@@ -12,6 +12,7 @@ class Discharger {
    void doIdle();
    void doDischarge();
    void doEnded();
+   bool isVoltageDroppingRapidly(int loadVoltage);
 
    Slot& slot;
    Reporter& reporter;
@@ -19,4 +20,6 @@ class Discharger {
    long startTime;
    long nextSampleTime;
    long mA_Minutes;
+   int lastVoltage;
+   char numberOfLargeDrops;
 };

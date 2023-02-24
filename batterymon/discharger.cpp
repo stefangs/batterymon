@@ -83,6 +83,22 @@ inline bool isBatteryRemoved(int voltage) {
 inline bool isTimeForNextSample(long nextSampleTime) {
   return millis() > nextSampleTime;
 }
+
+bool 
+Discharger::isVoltageDroppingRapidly(int loadVoltage) {
+  int drop = lastVoltage - loadVoltage;
+  lastVoltage = loadVoltage;
+  if (drop > 15) {
+    numberOfLargeDrops++;
+  } else {
+    numberOfLargeDrops = 0;
+  }
+  return (numberOfLargeDrops >= 3) && (loadVoltage < 1000);
+}
+
+inline bool isUnloadedBelowMinimum(int unloadedVoltage) {
+  return unloadedVoltage < 850;
+}
  
 void
 Discharger::doDischarge() {
@@ -99,8 +115,8 @@ Discharger::doDischarge() {
     delay(LOAD_PAUSE);
     int unloaded = slot.voltage();
     reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes / 60);
-    nextSampleTime = nextSampleTime + SAMPLE_TIME_IN_MS;
-    if (unloaded < 850) {
+    nextSampleTime =+ SAMPLE_TIME_IN_MS;
+    if (isUnloadedBelowMinimum(unloaded) || isVoltageDroppingRapidly(loaded)) {
       reporter.reportEnd(mA_Minutes / 60);
       state = ended;
     } else {
