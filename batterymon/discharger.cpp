@@ -46,6 +46,8 @@ Discharger::doInitial() {
     state = discharging;
     startTime = millis();
     mA_Minutes = 0;
+    lastVoltage = 0;
+    numberOfLargeDrops = 0;
     nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
     slot.getGreenLED().off();
     slot.getRedLED().blinkOn(400, 50);
@@ -69,6 +71,8 @@ Discharger::doIdle() {
     state = discharging;
     startTime = millis();
     mA_Minutes = 0;
+    lastVoltage = 0;
+    numberOfLargeDrops = 0;
     nextSampleTime = startTime + SAMPLE_TIME_IN_MS;
     slot.getGreenLED().off();
     slot.getRedLED().blinkOn(400, 50);
@@ -115,7 +119,7 @@ Discharger::doDischarge() {
     delay(LOAD_PAUSE);
     int unloaded = slot.voltage();
     reporter.reportSample(millis() - startTime, loaded, unloaded, current, mA_Minutes / 60);
-    nextSampleTime =+ SAMPLE_TIME_IN_MS;
+    nextSampleTime += SAMPLE_TIME_IN_MS;
     if (isUnloadedBelowMinimum(unloaded) || isVoltageDroppingRapidly(loaded)) {
       reporter.reportEnd(mA_Minutes / 60);
       state = ended;
