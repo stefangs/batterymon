@@ -65,7 +65,7 @@ EEPromReporter::printReport() {
   int maxCurrent = 0;
   int minCurrent = 2000;
   long mAMinutes = 0;
-  long joule = 0;
+  double joule = 0;
   
   Serial.println("*Start report*");
   EEPROM.get(0, sample);
@@ -78,7 +78,7 @@ EEPromReporter::printReport() {
     maxCurrent = max(maxCurrent, current);
     minCurrent = min(minCurrent, current);
     mAMinutes += current;
-    joule += (sample.loadedVoltage * current * 60L)  / 1000L;
+    joule += (sample.loadedVoltage * (double)current * 60.0)  / 1000000.0;
     reporter.reportSample(time, sample.loadedVoltage, sample.unloadedVoltage, current, 0);
     time += SAMPLE_TIME;
     readSlot += sizeof(Sample);
@@ -113,7 +113,7 @@ EEPromReporter::printReport() {
   Serial.println(" mAh");
 
   Serial.print("Energy: ");
-  Serial.print(joule / 1000);
+  Serial.print(joule);
   Serial.println(" J");
 
   Serial.println("*End report*");

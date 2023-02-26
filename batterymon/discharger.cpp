@@ -34,8 +34,9 @@ inline bool isBatteryPresent(int voltage) {
 }
 
 void
-Discharger::doInitial() {
+Discharger::doInitial() { 
   if (isBatteryPresent(slot.voltage())) {
+  Serial.println("Battery found");    
     // Battery already in, resume dischare
     reporter.reportResume(slot.voltage());
     nextSampleTime = millis() + SAMPLE_TIME_IN_MS;
@@ -52,7 +53,7 @@ Discharger::doInitial() {
     slot.getGreenLED().off();
     slot.getRedLED().blinkOn(400, 50);
     slot.getRedLED().blinkCount(loadCurrent/100);
-  } else {
+  } else {    
     state = idle;
   }
 }
