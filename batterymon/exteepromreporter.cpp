@@ -1,61 +1,61 @@
 #include <Arduino.h>
 #include <EEPROM.h>
 // #include <AT24C256.h> // dantudose
-#include "eepromreporter.h"
+#include "exteepromreporter.h"
 #include "serialreporter.h"
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
 
-struct Sample {
+struct ExtSample {
   unsigned int loadedVoltage : 11;
   unsigned int unloadedVoltage : 11;
-} sample;
+} extSample;
 
 void
-EEPromReporter::reportResume(int startVoltage) {
+ExtEEPromReporter::reportResume(int startVoltage) {
   nextSample = millis() + SAMPLE_TIME;
   slot = 0;
-  EEPROM.get(0, sample);
+  EEPROM.get(0, extSample);
   // Find next free slot (or the last)
-  while (((slot + 2) * sizeof(Sample) < EEPROM.length()) && sample.unloadedVoltage != 0) {
+  while (((slot + 2) * sizeof(extSample) < EEPROM.length()) && extSample.unloadedVoltage != 0) {
     slot++;
-    EEPROM.get(slot * sizeof(Sample), sample);
+    EEPROM.get(slot * sizeof(extSample), extSample);
   }
 }
 
 void
-EEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
+ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   slot = 0;
   nextSample = millis();
   reportSample(0, loadVoltage, startVoltage, 0, 0);
 }
 
 void
-EEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
+ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
   if (abs(millis() - nextSample) < 30000) {
     nextSample += SAMPLE_TIME;
-    sample.loadedVoltage = loadedVoltage;
-    sample.unloadedVoltage = unloadedVoltage;
-    EEPROM.put(slot * sizeof(Sample), sample);
-    if ((slot + 2) * sizeof(Sample) < EEPROM.length()) {
+    extSample.loadedVoltage = loadedVoltage;
+    extSample.unloadedVoltage = unloadedVoltage;
+    EEPROM.put(slot * sizeof(extSample), extSample);
+    if ((slot + 2) * sizeof(extSample) < EEPROM.length()) {
       slot++;      
     }
-    sample.unloadedVoltage = 0;
-    EEPROM.put(slot * sizeof(Sample), sample);
+    extSample.unloadedVoltage = 0;
+    EEPROM.put(slot * sizeof(extSample), extSample);
   }
 }
 
 void
-EEPromReporter::reportEnd(int mAh) {
+ExtEEPromReporter::reportEnd(int mAh) {
 }
 
 void
-EEPromReporter::reportWaiting() {
+ExtEEPromReporter::reportWaiting() {
 }
 
 void 
-EEPromReporter::printReport() {
+ExtEEPromReporter::printReport() {
   int readSlot = 0;
   long time = 0;
   SerialReporter reporter;
@@ -69,18 +69,18 @@ EEPromReporter::printReport() {
   double joule = 0;
   
   Serial.println("*Start report*");
-  EEPROM.get(0, sample);
-  while (sample.unloadedVoltage != 0) {
-    int current = sample.loadedVoltage * 10 / 33;
-    maxLoadedVoltage = max(maxLoadedVoltage, sample.loadedVoltage);
-    minLoadedVoltage = min(minLoadedVoltage, sample.loadedVoltage);
-    maxUnloadedVoltage = max(maxUnloadedVoltage, sample.unloadedVoltage);
-    minUnloadedVoltage = min(minUnloadedVoltage, sample.unloadedVoltage);
+  EEPROM.get(0, extSample);
+  while (extSample.unloadedVoltage != 0) {
+    int current = extSample.loadedVoltage * 10 / 33;
+    maxLoadedVoltage = max(maxLoadedVoltage, extSample.loadedVoltage);
+    minLoadedVoltage = min(minLoadedVoltage, extSample.loadedVoltage);
+    maxUnloadedVoltage = max(maxUnloadedVoltage, extSample.unloadedVoltage);
+    minUnloadedVoltage = min(minUnloadedVoltage, extSample.unloadedVoltage);
     maxCurrent = max(maxCurrent, current);
     minCurrent = min(minCurrent, current);
     mAMinutes += current;
-    joule += (sample.loadedVoltage * (double)current * 60.0)  / 1000000.0;
-    reporter.reportSample(time, sample.loadedVoltage, sample.unloadedVoltage, current, 0);
+    joule += (extSample.loadedVoltage * (double)current * 60.0)  / 1000000.0;
+    reporter.reportextSample(time, sample.loadedVoltage, sample.unloadedVoltage, current, 0);
     time += SAMPLE_TIME;
     readSlot += sizeof(Sample);
     EEPROM.get(readSlot, sample);
