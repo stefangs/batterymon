@@ -1,19 +1,31 @@
 #include <Arduino.h>
-#include <EEPROM.h>
-// #include <AT24C256.h> // dantudose
+#include <AT24C256.h> // dantudose
 #include "exteepromreporter.h"
 #include "serialreporter.h"
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
+#define MARK (0xAABBCCDD)
+
+AT24C256 eeprom(0x50);
 
 struct ExtSample {
   unsigned int loadedVoltage : 11;
   unsigned int unloadedVoltage : 11;
 } extSample;
 
+struct ExtHeader {
+  unsigned long mark;
+  int lastReport;
+} header;
+
+ExtEEPromReporter::ExtEEPromReporter(byte address) {
+  
+
+}
+
 void
-ExtEEPromReporter::reportResume(int startVoltage) {
+ExtEEPromReporter::reportResume(int startVoltage) { /*
   nextSample = millis() + SAMPLE_TIME;
   slot = 0;
   EEPROM.get(0, extSample);
@@ -21,18 +33,18 @@ ExtEEPromReporter::reportResume(int startVoltage) {
   while (((slot + 2) * sizeof(extSample) < EEPROM.length()) && extSample.unloadedVoltage != 0) {
     slot++;
     EEPROM.get(slot * sizeof(extSample), extSample);
-  }
+  } */
 }
 
 void
-ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
+ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) { /*
   slot = 0;
   nextSample = millis();
-  reportSample(0, loadVoltage, startVoltage, 0, 0);
+  reportSample(0, loadVoltage, startVoltage, 0, 0);*/
 }
 
 void
-ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
+ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) { /*
   if (abs(millis() - nextSample) < 30000) {
     nextSample += SAMPLE_TIME;
     extSample.loadedVoltage = loadedVoltage;
@@ -43,7 +55,7 @@ ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int
     }
     extSample.unloadedVoltage = 0;
     EEPROM.put(slot * sizeof(extSample), extSample);
-  }
+  }*/
 }
 
 void
@@ -55,7 +67,7 @@ ExtEEPromReporter::reportWaiting() {
 }
 
 void 
-ExtEEPromReporter::printReport() {
+ExtEEPromReporter::printReport() { /*
   int readSlot = 0;
   long time = 0;
   SerialReporter reporter;
@@ -117,5 +129,5 @@ ExtEEPromReporter::printReport() {
   Serial.print(joule);
   Serial.println(" J");
 
-  Serial.println("*End report*");
+  Serial.println("*End report*");*/
 }
