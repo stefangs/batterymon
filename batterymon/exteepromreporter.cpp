@@ -6,6 +6,8 @@
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
 #define MARK (0xAABBCCDD)
+#define REPORT_START (100)
+#define REPORT_SIZE (4096)
 
 AT24C256 eeprom(0x50);
 
@@ -18,6 +20,17 @@ struct ExtHeader {
   unsigned long mark;
   int lastReport;
 } header;
+
+void
+ExtEEPromReporter::writeSample(ExtSample* sample){
+  eeprom.write(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+}
+
+void
+ExtEEPromReporter::readSample(ExtSample* sample){
+  eeprom.read(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+}
+
 
 ExtEEPromReporter::ExtEEPromReporter(byte address) {
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
@@ -44,19 +57,20 @@ ExtEEPromReporter::reportResume(int startVoltage) { /*
 }
 
 void
-ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) { /*
+ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   slot = 0;
   nextSample = millis();
-  reportSample(0, loadVoltage, startVoltage, 0, 0);*/
+  reportSample(0, loadVoltage, startVoltage, 0, 0);
 }
 
 void
-ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) { /*
+ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
   if (abs(millis() - nextSample) < 30000) {
     nextSample += SAMPLE_TIME;
     extSample.loadedVoltage = loadedVoltage;
     extSample.unloadedVoltage = unloadedVoltage;
-    EEPROM.put(slot * sizeof(extSample), extSample);
+    writeSample(&extSample);
+    // HERE
     if ((slot + 2) * sizeof(extSample) < EEPROM.length()) {
       slot++;      
     }

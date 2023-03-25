@@ -1,6 +1,8 @@
 
 #include "reporter.h"
 
+struct ExtSample;
+
 class ExtEEPromReporter : public Reporter {
   public:
     ExtEEPromReporter(byte address);
@@ -11,6 +13,9 @@ class ExtEEPromReporter : public Reporter {
     void reportWaiting();
     void printReport();
   private:
+    void writeSample(ExtSample* sample);
+    void readSample(ExtSample* sample);
+    void readSample
     int slot;
     long nextSample;
 };
