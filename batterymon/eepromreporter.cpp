@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <EEPROM.h>
-// #include <AT24C256.h> // dantudose
 #include "eepromreporter.h"
 #include "serialreporter.h"
 

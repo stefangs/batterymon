@@ -20,8 +20,15 @@ struct ExtHeader {
 } header;
 
 ExtEEPromReporter::ExtEEPromReporter(byte address) {
-  
-
+  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  Serial.print("Mark: 0x");  
+  Serial.print(header.mark, HEX);  
+  Serial.println();
+  if (header.mark != MARK) {
+    header.mark = MARK;
+    header.lastReport = 0;
+  }
+  eeprom.write(0, (uint8_t*)&header, sizeof(ExtHeader));
 }
 
 void
