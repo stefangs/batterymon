@@ -5,12 +5,10 @@
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCD0)
+#define MARK (0xAABBCCD2)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
-
-AT24C256 eeprom(0x50);
 
 struct ExtSample {
   unsigned int loadedVoltage : 11;
@@ -22,11 +20,16 @@ struct ExtHeader {
   int lastReport;
 } header;
 
-ExtEEPromReporter::ExtEEPromReporter() {
+ExtEEPromReporter::ExtEEPromReporter(AT24C256& eeprom) : eeprom(eeprom){
+
+}
+
+void 
+ExtEEPromReporter::begin() {
   state = ok;
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
   if (header.mark != MARK) {
-    state = initialized;
+    Serial.println("No mark, resetting eeprom");
     header.mark = MARK;
     header.lastReport = 0;
     eeprom.write(0, (uint8_t*)&header, sizeof(ExtHeader));
@@ -34,17 +37,10 @@ ExtEEPromReporter::ExtEEPromReporter() {
     extSample.unloadedVoltage = 0;
     writeSample(&extSample);  
   }
+  header.mark = 0; // reset to test read  
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
   if (header.mark != MARK) {
-    state = error;
-  }
-}
-
-void printState(EEPromState state) {
-  if (state == initialized) {
-    Serial.println("No mark, resetting eeprom");
-  } else if (state == error) {
-    Serial.println("*** Error, could not write to eeprom ***");
+    Serial.println("*** Error, could not write to external eeprom ***");
   }
 }
 
@@ -60,12 +56,11 @@ ExtEEPromReporter::readSample(ExtSample* sample){
 
 void
 ExtEEPromReporter::reportResume(int startVoltage) {
-  printState(state);
   nextSample = millis() + SAMPLE_TIME;
   slot = 0;
   readSample(&extSample);
   // Find next free slot (or the last)
-  while ((slot + 2 > SLOTS_PER_REPORT) && extSample.unloadedVoltage != 0) {
+  while ((slot + 2 < SLOTS_PER_REPORT) && extSample.unloadedVoltage != 0) {
     slot++;
     readSample(&extSample);
   }
@@ -73,7 +68,6 @@ ExtEEPromReporter::reportResume(int startVoltage) {
 
 void
 ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
-  printState(state);
   slot = 0;
   nextSample = millis();
   reportSample(0, loadVoltage, startVoltage, 0, 0);
@@ -86,7 +80,7 @@ ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int
     extSample.loadedVoltage = loadedVoltage;
     extSample.unloadedVoltage = unloadedVoltage;
     writeSample(&extSample);
-    if (slot + 2 > SLOTS_PER_REPORT)  {
+    if (slot + 2 < SLOTS_PER_REPORT)  {
       slot++;      
     }
     extSample.unloadedVoltage = 0;
@@ -119,7 +113,7 @@ ExtEEPromReporter::printReport() {
   
   Serial.println("*Start report*");
   readSample(&extSample);
-  while (extSample.unloadedVoltage != 0) {
+  while ((extSample.unloadedVoltage != 0) && (slot < SLOTS_PER_REPORT)) {
     int current = extSample.loadedVoltage * 10 / 33;
     maxLoadedVoltage = max(maxLoadedVoltage, extSample.loadedVoltage);
     minLoadedVoltage = min(minLoadedVoltage, extSample.loadedVoltage);
