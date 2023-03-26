@@ -3,9 +3,11 @@
 
 struct ExtSample;
 
+enum EEPromState {ok, initialized, error};
+
 class ExtEEPromReporter : public Reporter {
   public:
-    ExtEEPromReporter(byte address);
+    ExtEEPromReporter();
     void reportResume(int startVoltage);
     void reportStart(int startVoltage, int loadVoltage, int current);
     void reportSample(long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh);
@@ -15,7 +17,7 @@ class ExtEEPromReporter : public Reporter {
   private:
     void writeSample(ExtSample* sample);
     void readSample(ExtSample* sample);
-    void readSample
     int slot;
     long nextSample;
+    EEPromState state;
 };

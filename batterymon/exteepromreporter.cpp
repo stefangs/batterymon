@@ -5,9 +5,10 @@
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCDD)
+#define MARK (0xAABBCCD0)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
+#define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
 
 AT24C256 eeprom(0x50);
 
@@ -21,6 +22,32 @@ struct ExtHeader {
   int lastReport;
 } header;
 
+ExtEEPromReporter::ExtEEPromReporter() {
+  state = ok;
+  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  if (header.mark != MARK) {
+    state = initialized;
+    header.mark = MARK;
+    header.lastReport = 0;
+    eeprom.write(0, (uint8_t*)&header, sizeof(ExtHeader));
+    slot = 0;
+    extSample.unloadedVoltage = 0;
+    writeSample(&extSample);  
+  }
+  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  if (header.mark != MARK) {
+    state = error;
+  }
+}
+
+void printState(EEPromState state) {
+  if (state == initialized) {
+    Serial.println("No mark, resetting eeprom");
+  } else if (state == error) {
+    Serial.println("*** Error, could not write to eeprom ***");
+  }
+}
+
 void
 ExtEEPromReporter::writeSample(ExtSample* sample){
   eeprom.write(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
@@ -31,33 +58,22 @@ ExtEEPromReporter::readSample(ExtSample* sample){
   eeprom.read(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
 }
 
-
-ExtEEPromReporter::ExtEEPromReporter(byte address) {
-  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
-  Serial.print("Mark: 0x");  
-  Serial.print(header.mark, HEX);  
-  Serial.println();
-  if (header.mark != MARK) {
-    header.mark = MARK;
-    header.lastReport = 0;
-  }
-  eeprom.write(0, (uint8_t*)&header, sizeof(ExtHeader));
-}
-
 void
-ExtEEPromReporter::reportResume(int startVoltage) { /*
+ExtEEPromReporter::reportResume(int startVoltage) {
+  printState(state);
   nextSample = millis() + SAMPLE_TIME;
   slot = 0;
-  EEPROM.get(0, extSample);
+  readSample(&extSample);
   // Find next free slot (or the last)
-  while (((slot + 2) * sizeof(extSample) < EEPROM.length()) && extSample.unloadedVoltage != 0) {
+  while ((slot + 2 > SLOTS_PER_REPORT) && extSample.unloadedVoltage != 0) {
     slot++;
-    EEPROM.get(slot * sizeof(extSample), extSample);
-  } */
+    readSample(&extSample);
+  }
 }
 
 void
 ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
+  printState(state);
   slot = 0;
   nextSample = millis();
   reportSample(0, loadVoltage, startVoltage, 0, 0);
@@ -70,13 +86,12 @@ ExtEEPromReporter::reportSample(long unsigned int timeMs, int loadedVoltage, int
     extSample.loadedVoltage = loadedVoltage;
     extSample.unloadedVoltage = unloadedVoltage;
     writeSample(&extSample);
-    // HERE
-    if ((slot + 2) * sizeof(extSample) < EEPROM.length()) {
+    if (slot + 2 > SLOTS_PER_REPORT)  {
       slot++;      
     }
     extSample.unloadedVoltage = 0;
-    EEPROM.put(slot * sizeof(extSample), extSample);
-  }*/
+    writeSample(&extSample);
+  }
 }
 
 void
@@ -88,8 +103,9 @@ ExtEEPromReporter::reportWaiting() {
 }
 
 void 
-ExtEEPromReporter::printReport() { /*
-  int readSlot = 0;
+ExtEEPromReporter::printReport() {
+  int currentSlot = slot;
+  slot = 0;
   long time = 0;
   SerialReporter reporter;
   int maxLoadedVoltage = 0;
@@ -102,7 +118,7 @@ ExtEEPromReporter::printReport() { /*
   double joule = 0;
   
   Serial.println("*Start report*");
-  EEPROM.get(0, extSample);
+  readSample(&extSample);
   while (extSample.unloadedVoltage != 0) {
     int current = extSample.loadedVoltage * 10 / 33;
     maxLoadedVoltage = max(maxLoadedVoltage, extSample.loadedVoltage);
@@ -113,11 +129,12 @@ ExtEEPromReporter::printReport() { /*
     minCurrent = min(minCurrent, current);
     mAMinutes += current;
     joule += (extSample.loadedVoltage * (double)current * 60.0)  / 1000000.0;
-    reporter.reportextSample(time, sample.loadedVoltage, sample.unloadedVoltage, current, 0);
+    reporter.reportSample(time, extSample.loadedVoltage, extSample.unloadedVoltage, current, 0);
     time += SAMPLE_TIME;
-    readSlot += sizeof(Sample);
-    EEPROM.get(readSlot, sample);
+    slot++;
+    readSample(&extSample);
   }
+  slot = currentSlot;
   Serial.print("Max loaded voltage: ");
   Serial.print(maxLoadedVoltage);
   Serial.println(" mV");
@@ -150,5 +167,5 @@ ExtEEPromReporter::printReport() { /*
   Serial.print(joule);
   Serial.println(" J");
 
-  Serial.println("*End report*");*/
+  Serial.println("*End report*");
 }

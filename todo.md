@@ -1,9 +1,10 @@
 # Todo
-* LED status
+* External eeprom
 * Resistance as parameter
-* EEPROM report mAh
 
 # Done
+* EEPROM report mAh
+* LED status
 * Report mAh
 * Reporter class
 * Generic reporter class
