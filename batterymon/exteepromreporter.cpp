@@ -20,13 +20,36 @@ struct ExtHeader {
   int lastReport;
 } header;
 
-ExtEEPromReporter::ExtEEPromReporter(AT24C256& eeprom) : eeprom(eeprom){
-
+ExtEEPromReporter::ExtEEPromReporter(){
 }
 
 void 
-ExtEEPromReporter::begin() {
-  state = ok;
+ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
+	twoWire->beginTransmission(i2cAddress);
+	twoWire->write((uint8_t)((address >> 8) & 0xFF));
+	twoWire->write((uint8_t)(address & 0xFF));
+  twoWire->write(data, len);
+	twoWire->endTransmission();
+}
+
+void 
+ExtEEPromReporter::readEEProm(uint16_t address, uint8_t* data, uint8_t len){
+	twoWire->beginTransmission(i2cAddress);
+	twoWire->write((uint8_t)((address >> 8) & 0xFF));
+	twoWire->write((uint8_t)(address & 0xFF));
+	twoWire->endTransmission();
+ // I was here...
+	twoWire->requestFrom(i2cAddress, len);
+	int i;
+	for(i = 0; i < len; i++){
+		if(twoWire->available()) data[i] = _twi->read();
+	}
+}
+
+void 
+ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
+  i2cAddress = address;
+  twoWire = &i2c;
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
   if (header.mark != MARK) {
     Serial.println("No mark, resetting eeprom");
