@@ -5,7 +5,7 @@
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCD2)
+#define MARK (0xAABBCCD1)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
@@ -51,6 +51,7 @@ ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
   i2cAddress = address;
   twoWire = &i2c;
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  Serial.println(header.mark,HEX);
   if (header.mark != MARK) {
     Serial.println("No mark, resetting eeprom");
     header.mark = MARK;
@@ -62,6 +63,7 @@ ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
   }
   header.mark = 0; // reset to test read  
   eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  Serial.println(header.mark,HEX);
   if (header.mark != MARK) {
     Serial.println("*** Error, could not write to external eeprom ***");
   }
