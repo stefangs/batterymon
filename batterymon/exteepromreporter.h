@@ -3,7 +3,6 @@
 #include "reporter.h"
 
 struct ExtSample;
-class AT24C256;
 
 class ExtEEPromReporter : public Reporter {
   public:
@@ -20,8 +19,8 @@ class ExtEEPromReporter : public Reporter {
     void readSample(ExtSample* sample);
     int slot;
     long nextSample;
-    void writeEEProm(uint16_t writeAddress, uint8_t* data, size_t len);
-    void readEEProm(uint16_t readAddress, uint8_t* data, size_t len);
+    int writeEEProm(uint16_t address, const uint8_t* data, size_t len);
+    int readEEProm(uint16_t address, uint8_t* data, uint8_t len);
     uint8_t i2cAddress;
     TwoWire* twoWire;
 };

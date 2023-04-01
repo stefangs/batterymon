@@ -1,11 +1,11 @@
 #include <Arduino.h>
-#include <AT24C256.h> // dantudose
+//#include <AT24C256.h> // dantudose
 #include "exteepromreporter.h"
 #include "serialreporter.h"
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCD1)
+#define MARK (0xAABBCCD4)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
@@ -23,60 +23,78 @@ struct ExtHeader {
 ExtEEPromReporter::ExtEEPromReporter(){
 }
 
-void 
+int 
 ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
 	twoWire->beginTransmission(i2cAddress);
 	twoWire->write((uint8_t)((address >> 8) & 0xFF));
 	twoWire->write((uint8_t)(address & 0xFF));
-  twoWire->write(data, len);
+  int written = twoWire->write(data, len);
 	twoWire->endTransmission();
+  return written;
 }
 
-void 
+int
 ExtEEPromReporter::readEEProm(uint16_t address, uint8_t* data, uint8_t len){
 	twoWire->beginTransmission(i2cAddress);
 	twoWire->write((uint8_t)((address >> 8) & 0xFF));
 	twoWire->write((uint8_t)(address & 0xFF));
 	twoWire->endTransmission();
- // I was here...
 	twoWire->requestFrom(i2cAddress, len);
-	int i;
-	for(i = 0; i < len; i++){
-		if(twoWire->available()) data[i] = _twi->read();
+	int byteNumber;
+	for(byteNumber = 0; (byteNumber < len) && twoWire->available(); byteNumber++){
+		data[byteNumber] = twoWire->read();
 	}
+  return byteNumber;
 }
 
 void 
 ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
   i2cAddress = address;
   twoWire = &i2c;
-  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
   Serial.println(header.mark,HEX);
-  if (header.mark != MARK) {
+  if (header.mark != /*MARK*/0) {
     Serial.println("No mark, resetting eeprom");
     header.mark = MARK;
     header.lastReport = 0;
-    eeprom.write(0, (uint8_t*)&header, sizeof(ExtHeader));
+    delay(500);
+    writeEEProm(0, (uint8_t*)&header, sizeof(ExtHeader));
     slot = 0;
-    extSample.unloadedVoltage = 0;
-    writeSample(&extSample);  
+    extSample.unloadedVoltage = 735;
+    writeSample(&extSample);
+    delay(500);        
+    extSample.unloadedVoltage = 0xFF;
+    readSample(&extSample);
+    if (extSample.unloadedVoltage != 735) {
+      Serial.print("Bad value in ext sample. Wrote 0, got: ");      
+      Serial.println(extSample.unloadedVoltage);
+    }
   }
   header.mark = 0; // reset to test read  
-  eeprom.read(0, (uint8_t *)&header, sizeof(ExtHeader));
+  readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
   Serial.println(header.mark,HEX);
   if (header.mark != MARK) {
-    Serial.println("*** Error, could not write to external eeprom ***");
+    Serial.println("*** Error, could not read/write to external eeprom ***");
   }
 }
 
 void
 ExtEEPromReporter::writeSample(ExtSample* sample){
-  eeprom.write(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+  int written = writeEEProm(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+  if (written != sizeof(ExtSample)) {
+    Serial.println("Wrong number bytes written to I2C");
+  }
 }
 
 void
 ExtEEPromReporter::readSample(ExtSample* sample){
-  eeprom.read(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+  int read = readEEProm(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
+  if (read != sizeof(ExtSample)) {
+    Serial.print("Wrong number bytes read from I2C: ");
+    Serial.print(read);
+    Serial.print(" instead of ");
+    Serial.print(sizeof(ExtSample));
+  }
 }
 
 void
