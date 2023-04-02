@@ -30,6 +30,7 @@ ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len
 	twoWire->write((uint8_t)(address & 0xFF));
   int written = twoWire->write(data, len);
 	twoWire->endTransmission();
+  delay(30); // AT24C256 needs 5-20 ms time after write to become available
   return written;
 }
 
@@ -52,29 +53,20 @@ ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
   i2cAddress = address;
   twoWire = &i2c;
   readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
-  Serial.println(header.mark,HEX);
-  if (header.mark != /*MARK*/0) {
+  if (header.mark != MARK) {
     Serial.println("No mark, resetting eeprom");
     header.mark = MARK;
     header.lastReport = 0;
-    delay(500);
     writeEEProm(0, (uint8_t*)&header, sizeof(ExtHeader));
     slot = 0;
-    extSample.unloadedVoltage = 735;
+    extSample.unloadedVoltage = 0;
     writeSample(&extSample);
-    delay(500);        
-    extSample.unloadedVoltage = 0xFF;
-    readSample(&extSample);
-    if (extSample.unloadedVoltage != 735) {
-      Serial.print("Bad value in ext sample. Wrote 0, got: ");      
-      Serial.println(extSample.unloadedVoltage);
-    }
   }
   header.mark = 0; // reset to test read  
   readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
-  Serial.println(header.mark,HEX);
   if (header.mark != MARK) {
     Serial.println("*** Error, could not read/write to external eeprom ***");
+    Serial.println(header.mark,HEX);
   }
 }
 
@@ -90,10 +82,7 @@ void
 ExtEEPromReporter::readSample(ExtSample* sample){
   int read = readEEProm(REPORT_START + slot * sizeof(ExtSample), (uint8_t*)sample, sizeof(ExtSample));
   if (read != sizeof(ExtSample)) {
-    Serial.print("Wrong number bytes read from I2C: ");
-    Serial.print(read);
-    Serial.print(" instead of ");
-    Serial.print(sizeof(ExtSample));
+    Serial.println("Wrong number bytes read from I2C");
   }
 }
 
