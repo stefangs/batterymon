@@ -30,7 +30,7 @@ ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len
 	twoWire->write((uint8_t)(address & 0xFF));
   int written = twoWire->write(data, len);
 	twoWire->endTransmission();
-  delay(30); // AT24C256 needs 5-20 ms time after write to become available
+  delay(30); // AT24C256 needs 5-20 ms time after write (tWR Write Cycle Time) to become available
   return written;
 }
 
