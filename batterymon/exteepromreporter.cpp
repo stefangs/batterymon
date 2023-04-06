@@ -9,6 +9,7 @@
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
+#define PAGE_SIZE (64)
 
 struct ExtSample {
   unsigned int loadedVoltage : 11;
@@ -24,7 +25,7 @@ ExtEEPromReporter::ExtEEPromReporter(){
 }
 
 int 
-ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
+ExtEEPromReporter::rawWriteEEProm(uint16_t address, const uint8_t* data, size_t len){
 	twoWire->beginTransmission(i2cAddress);
 	twoWire->write((uint8_t)((address >> 8) & 0xFF));
 	twoWire->write((uint8_t)(address & 0xFF));
@@ -32,6 +33,23 @@ ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len
 	twoWire->endTransmission();
   delay(30); // AT24C256 needs 5-20 ms time after write (tWR Write Cycle Time) to become available
   return written;
+}
+
+int 
+ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
+  uint8_t* dataToWrite = data;
+  size_t lenRemaining = len;
+  uint16_t nextAddress = address;
+  int written = 0;
+  do {
+    locationOnPage = nextAddress % PAGE_SIZE;
+    size_t maxBytesToWrite = PAGE_SIZE - locationOnPage;
+    size_t bytesToWrite = min(maxBytesToWrite, lenRemaining);
+    written += rawWriteEEProm(nextAddress, dataToWrite, bytesToWrite);
+    lenRemaining -= bytesToWrite;
+    dataToWrite += bytesToWrite;
+    nextAddress += bytesToWrite;
+  } while (lenRemaining > 0)
 }
 
 int
