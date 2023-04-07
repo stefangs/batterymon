@@ -42,14 +42,15 @@ ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len
   uint16_t nextAddress = address;
   int written = 0;
   do {
-    locationOnPage = nextAddress % PAGE_SIZE;
+    uint16_t locationOnPage = nextAddress % PAGE_SIZE;
     size_t maxBytesToWrite = PAGE_SIZE - locationOnPage;
     size_t bytesToWrite = min(maxBytesToWrite, lenRemaining);
     written += rawWriteEEProm(nextAddress, dataToWrite, bytesToWrite);
     lenRemaining -= bytesToWrite;
     dataToWrite += bytesToWrite;
     nextAddress += bytesToWrite;
-  } while (lenRemaining > 0)
+  } while (lenRemaining > 0);
+  return written;
 }
 
 int
