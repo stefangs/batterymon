@@ -7,7 +7,7 @@
 #include "exteepromreporter.h"
 #include <Wire.h>
 
-Slot slot0(2, A0, 3, 4);
+Slot slot0(10, A0, 11, 12);
 SerialReporter sreporter;
 ExtEEPromReporter  xereporter;
 DoubleReporter dreporter(sreporter, xereporter);

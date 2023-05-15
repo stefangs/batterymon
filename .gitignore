@@ -43,3 +43,4 @@ target
 *.ear
 .idea
 .vscode/c_cpp_properties.json
+database/connection.txt

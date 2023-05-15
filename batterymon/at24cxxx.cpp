@@ -2,6 +2,8 @@
 #include "at24cxxx.h"
 #include "Arduino.h"
 
+#define PAGE_SIZE (64)
+
 AT24Cxxx::AT24Cxxx(uint8_t address, int size, TwoWire& i2c = Wire, int writeDelay = 30)  :
   i2cAddress(address), size(size), twoWire(&i2c), writeDelay(writeDelay) {
 }

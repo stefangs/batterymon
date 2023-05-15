@@ -1,0 +1,16 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "ca": "C:\\Users\\Stefan\\AppData\\Roaming\\postgresql\\root.crt"
+                }
+            },
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "CockroachDB",
+            "connectString": "postgresql://stefan:PCj-Oo76BcA-KsyYU0in-Q@batterymon-6715.7tc.cockroachlabs.cloud:26257/battery?sslmode=verify-full",
+            "name": "batterymon"
+        }
+    ]
+}
