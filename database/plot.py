@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 with open("connection.txt", "r") as file:
     connection_string = file.readline().strip()
 
-print(connection_string)
-
 # Connect to the PostgreSQL database using the URL
 conn = psycopg2.connect(connection_string)
 
@@ -31,6 +29,7 @@ plt.xlabel("Time (minutes)")
 plt.ylabel("Voltage")
 plt.title("Discharge voltage")
 plt.ylim(0)
+plt.legend()
 plt.show()
 
 # Close the database connection
