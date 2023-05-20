@@ -44,3 +44,6 @@ target
 .idea
 .vscode/c_cpp_properties.json
 database/connection.txt
+
+#VSCode
+settings.json
