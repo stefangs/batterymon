@@ -37,7 +37,7 @@ ExtEEPromReporter::rawWriteEEProm(uint16_t address, const uint8_t* data, size_t 
 
 int 
 ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
-  uint8_t* dataToWrite = data;
+  const uint8_t* dataToWrite = data;
   size_t lenRemaining = len;
   uint16_t nextAddress = address;
   int written = 0;
@@ -68,7 +68,7 @@ ExtEEPromReporter::readEEProm(uint16_t address, uint8_t* data, uint8_t len){
 }
 
 void 
-ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
+ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c) {
   i2cAddress = address;
   twoWire = &i2c;
   readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
