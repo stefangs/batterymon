@@ -152,7 +152,7 @@ ExtEEPromReporter::reportWaiting() {
 
 void
 ExtEEPromReporter::printSample(int session, long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
-  Serial.print("> ");
+  Serial.print(">S");
   Serial.print(session);
   Serial.print(',');
   Serial.print(timeMs / MINUTE_IN_MS);
@@ -171,7 +171,6 @@ ExtEEPromReporter::printReport() {
   int currentSlot = slot;
   slot = 0;
   long time = 0;
-  SerialReporter reporter;
   int maxLoadedVoltage = 0;
   int minLoadedVoltage = 2000;
   int maxUnloadedVoltage = 0;
@@ -181,7 +180,9 @@ ExtEEPromReporter::printReport() {
   long mAMinutes = 0;
   double joule = 0;
   
-  Serial.println("*Start report*");
+  Serial.print("*Start report*");
+  Serial.print(">B ");
+  Serial.println(header.lastReport);
   readSample(&extSample);
   while ((extSample.unloadedVoltage != 0) && (slot < SLOTS_PER_REPORT)) {
     int current = extSample.loadedVoltage * 10 / 33;
@@ -230,6 +231,7 @@ ExtEEPromReporter::printReport() {
   Serial.print("Energy: ");
   Serial.print(joule);
   Serial.println(" J");
-
+  Serial.print(">E ");
+  Serial.println(header.lastReport);
   Serial.println("*End report*");
 }
