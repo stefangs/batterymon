@@ -16,7 +16,7 @@ column3_name = "mAh"
 column4_name = "Joule"
 
 # Execute the SQL query to fetch the data
-cursor.execute("select sess, round(AVG(loaded), 2) AS AVGV, round(SUM(loaded) * 1000 / 60 / 3.3, 0) AS mAh, ROUND(SUM(loaded * loaded / 3.4) * 60, 0) AS Joule from samples group by sess order by mAh DESC, AVGV DESC ;")
+cursor.execute("select sess, round(AVG(loaded), 2) AS AVGV, round(SUM(loaded) * 1000 / 60 / 3.3, 0) AS mAh, ROUND(SUM(loaded * loaded / 3.4) * 60, 0) AS Joule from samples group by sess order by AVGV DESC, mAh DESC;")
 
 # Fetch all the rows from the result set
 rows = cursor.fetchall()

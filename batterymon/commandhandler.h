@@ -1,6 +1,8 @@
 
 #pragma once
 
+class ExtEEPromReporter;
+
 #define BUFFER_SIZE (5)
 
 class CommandHandler {

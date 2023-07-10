@@ -5,8 +5,8 @@
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCD4)
-#define CURRENT_SESSION (16)
+#define MARK (0xAABBCCD5)
+#define CURRENT_SESSION (20)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
@@ -38,7 +38,7 @@ ExtEEPromReporter::rawWriteEEProm(uint16_t address, const uint8_t* data, size_t 
 
 int 
 ExtEEPromReporter::writeEEProm(uint16_t address, const uint8_t* data, size_t len){
-  uint8_t* dataToWrite = data;
+  const uint8_t* dataToWrite = data;
   size_t lenRemaining = len;
   uint16_t nextAddress = address;
   int written = 0;
@@ -69,7 +69,7 @@ ExtEEPromReporter::readEEProm(uint16_t address, uint8_t* data, uint8_t len){
 }
 
 void 
-ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c = Wire) {
+ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c) {
   i2cAddress = address;
   twoWire = &i2c;
   readEEProm(0, (uint8_t *)&header, sizeof(ExtHeader));
@@ -152,7 +152,7 @@ ExtEEPromReporter::reportWaiting() {
 
 void
 ExtEEPromReporter::printSample(int session, long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
-  Serial.print(">S");
+  Serial.print(">S,");
   Serial.print(session);
   Serial.print(',');
   Serial.print(timeMs / MINUTE_IN_MS);
@@ -180,8 +180,8 @@ ExtEEPromReporter::printReport() {
   long mAMinutes = 0;
   double joule = 0;
   
-  Serial.print("*Start report*");
-  Serial.print(">B ");
+  Serial.println("*Start report*");
+  Serial.print(">B,");
   Serial.println(header.lastReport);
   readSample(&extSample);
   while ((extSample.unloadedVoltage != 0) && (slot < SLOTS_PER_REPORT)) {
@@ -231,7 +231,7 @@ ExtEEPromReporter::printReport() {
   Serial.print("Energy: ");
   Serial.print(joule);
   Serial.println(" J");
-  Serial.print(">E ");
+  Serial.print(">E,");
   Serial.println(header.lastReport);
   Serial.println("*End report*");
 }
