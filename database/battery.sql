@@ -8,3 +8,8 @@ CREATE TABLE IF NOT EXISTS samples (
     PRIMARY KEY(sess, minute)
 );
 
+CREATE TABLE IF NOT EXISTS sessions (
+    id INTEGER PRIMARY KEY,
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    battery INTEGER
+);

@@ -2,6 +2,7 @@ import psycopg2
 import fire
 from tabulate import tabulate
 import matplotlib.pyplot as plt
+import serial
 
 class Batt(object):
   """Battery health app"""
@@ -46,10 +47,75 @@ class Batt(object):
 
     # Close the database connection
     conn.close()
+
+  def __insertSamples(self, samples):
+    conn, cursor = self.__connectDatabase()
+    for sample in samples:
+      session = int(sample[0])
+      minutes = int(sample[1])
+      loaded = float(sample[2]) / 1000.0
+      unloaded = float(sample[3]) / 1000.0
+      resistance = 3.3
+      try:
+        cursor.execute("INSERT INTO samples (sess, minute, unloaded, loaded, resistance) VALUES (%s, %s, %s, %s, %s)", 
+                       (session, minutes, unloaded, loaded, resistance))
+        print("inserted")
+      except:
+        print("Failed to insert sample", minutes, "from session", session)
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
   
   def read(self, battery=0, port='COM3'):
     """NYI Reads a discharge session from serial port and inserts in database"""
-    return 2
+    ser = serial.Serial(port, 115200, timeout=5.0)
+
+    # Wait until sampler prints startup line
+    str(ser.readline(), 'UTF-8')
+
+    # Write the report command
+    ser.write(b'R\r\n')
+
+    samples = []
+    sessionNr = 0
+
+    while True:
+      line = str(ser.readline(), 'UTF-8')
+      if len(line) == 0:
+          break
+      if line[0] == '>':
+          arguments = line[3:].strip().rsplit(sep=',')
+          command = line[1]
+          if command == 'S':
+            samples.append(arguments)
+          if command == 'E':
+            sessionNr = int(arguments[0])
+            break
+
+    print(len(samples), "samples read from session", sessionNr)
+
+    self.__insertSamples(samples)
+
+  def delete(self, session):
+    """Delete a session"""
+    conn, cursor = self.__connectDatabase()
+    cursor.execute("select count(*) from samples where sess=%s;", (session,))
+    count = cursor.fetchone()[0]
+    response = input("Do you want to delete session " + str(session) + " with " + str(count) + " samples ? (Y/N)")
+    if response.upper() != "Y":
+      print("Not deleting")
+      return
+    try:
+      cursor.execute("delete from samples where sess=%s;", (session,))
+      cursor.execute("delete from sessions where id=%s;", (session,))
+      conn.commit()
+    except:
+        print("Failed to delete session", session)
+    cursor.close()
+    conn.close()
+
   
 if __name__ == '__main__':
   fire.Fire(Batt)
