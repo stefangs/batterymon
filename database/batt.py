@@ -16,7 +16,7 @@ class Batt(object):
     return (conn, cursor)
 
   def list(self):
-    """List all discharge sessions"""
+    """Lists all discharge sessions"""
     conn, cursor = self.__connectDatabase()
     cursor.execute("select sess, round(AVG(loaded), 2) AS AVGV, round(SUM(loaded) * 1000 / 60 / 3.3, 0) AS mAh, ROUND(SUM(loaded * loaded / 3.4) * 60, 0) AS Joule from samples group by sess order by AVGV DESC, mAh DESC;")
     rows = cursor.fetchall()
@@ -26,7 +26,12 @@ class Batt(object):
     print(tabulate(rows, headers=headers))
 
   def plot(self, session=0):
-    """Plots the discharge graph for a session"""
+    """
+    Plots the discharge graph for a session
+    
+    Args:
+      session (integer): Identity of the session to plot
+    """
     conn, cur = self.__connectDatabase()
     # Execute a SELECT statement to retrieve the data
     cur.execute("SELECT minute, loaded, unloaded FROM samples where sess=%s;", (session,))
@@ -75,7 +80,14 @@ class Batt(object):
 
   
   def read(self, battery=0, port='COM3'):
-    """NYI Reads a discharge session from serial port and inserts in database"""
+    """
+    Reads a discharge session from serial port and inserts in database
+    
+    Args:
+      battery (integer): The identity of the battery beeing discharged in the session
+      port (string): The name of the COM port that the discharger is connected to
+    
+    """
     try:
       ser = serial.Serial(port, 115200, timeout=5.0)
     except:
@@ -110,7 +122,12 @@ class Batt(object):
     self.__insertSamples(sessionNr, samples, battery)
 
   def delete(self, session):
-    """Delete a session"""
+    """
+    Deletes a session and all its samples
+    
+    Args:
+      session (integer): Identity of the session to delete
+    """
     conn, cursor = self.__connectDatabase()
     cursor.execute("select count(*) from samples where sess=%s;", (session,))
     count = cursor.fetchone()[0]
