@@ -5,7 +5,8 @@
 
 #define MINUTE_IN_MS (60000)
 #define SAMPLE_TIME (60000)
-#define MARK (0xAABBCCD4)
+#define MARK (0xAABBCCD5)
+#define CURRENT_SESSION (20)
 #define REPORT_START (100)
 #define REPORT_SIZE (4096)
 #define SLOTS_PER_REPORT (REPORT_SIZE/sizeof(ExtSample))
@@ -75,7 +76,7 @@ ExtEEPromReporter::begin(uint8_t address, TwoWire& i2c) {
   if (header.mark != MARK) {
     Serial.println("No mark, resetting eeprom");
     header.mark = MARK;
-    header.lastReport = 0;
+    header.lastReport = CURRENT_SESSION;
     writeEEProm(0, (uint8_t*)&header, sizeof(ExtHeader));
     slot = 0;
     extSample.unloadedVoltage = 0;
@@ -122,6 +123,8 @@ ExtEEPromReporter::reportStart(int startVoltage, int loadVoltage, int current) {
   slot = 0;
   nextSample = millis();
   reportSample(0, loadVoltage, startVoltage, 0, 0);
+  header.lastReport++;
+  writeEEProm(0, (uint8_t*)&header, sizeof(ExtHeader));
 }
 
 void
@@ -147,12 +150,27 @@ void
 ExtEEPromReporter::reportWaiting() {
 }
 
+void
+ExtEEPromReporter::printSample(int session, long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh) {
+  Serial.print(">S,");
+  Serial.print(session);
+  Serial.print(',');
+  Serial.print(timeMs / MINUTE_IN_MS);
+  Serial.print(',');
+  Serial.print(loadedVoltage);
+  Serial.print(',');
+  Serial.print(unloadedVoltage);
+  Serial.print(',');
+  Serial.print(current);
+  Serial.print(',');
+  Serial.println(mAh);
+}
+
 void 
 ExtEEPromReporter::printReport() {
   int currentSlot = slot;
   slot = 0;
   long time = 0;
-  SerialReporter reporter;
   int maxLoadedVoltage = 0;
   int minLoadedVoltage = 2000;
   int maxUnloadedVoltage = 0;
@@ -163,6 +181,8 @@ ExtEEPromReporter::printReport() {
   double joule = 0;
   
   Serial.println("*Start report*");
+  Serial.print(">B,");
+  Serial.println(header.lastReport);
   readSample(&extSample);
   while ((extSample.unloadedVoltage != 0) && (slot < SLOTS_PER_REPORT)) {
     int current = extSample.loadedVoltage * 10 / 33;
@@ -174,7 +194,7 @@ ExtEEPromReporter::printReport() {
     minCurrent = min(minCurrent, current);
     mAMinutes += current;
     joule += (extSample.loadedVoltage * (double)current * 60.0)  / 1000000.0;
-    reporter.reportSample(time, extSample.loadedVoltage, extSample.unloadedVoltage, current, 0);
+    printSample(header.lastReport, time, extSample.loadedVoltage, extSample.unloadedVoltage, current, 0);
     time += SAMPLE_TIME;
     slot++;
     readSample(&extSample);
@@ -211,6 +231,7 @@ ExtEEPromReporter::printReport() {
   Serial.print("Energy: ");
   Serial.print(joule);
   Serial.println(" J");
-
+  Serial.print(">E,");
+  Serial.println(header.lastReport);
   Serial.println("*End report*");
 }

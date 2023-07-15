@@ -22,6 +22,7 @@ class ExtEEPromReporter : public Reporter {
     int rawWriteEEProm(uint16_t address, const uint8_t* data, size_t len);
     int writeEEProm(uint16_t address, const uint8_t* data, size_t len);
     int readEEProm(uint16_t address, uint8_t* data, uint8_t len);
+    void printSample(int session, long unsigned int timeMs, int loadedVoltage, int unloadedVoltage, int current, int mAh);
     uint8_t i2cAddress;
     TwoWire* twoWire;
 };

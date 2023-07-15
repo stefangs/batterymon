@@ -11,11 +11,12 @@ conn = psycopg2.connect(connection_string)
 cursor = conn.cursor()
 
 column1_name = "Session"
-column2_name = "mAh"
-column3_name = "Voltage"
+column2_name = "Voltage"
+column3_name = "mAh"
+column4_name = "Joule"
 
 # Execute the SQL query to fetch the data
-cursor.execute("select sess, round(SUM(loaded) * 1000 / 60 / 3.3, 0) AS mAh,  round(AVG(loaded), 2) AS AVGV from samples group by sess order by mAh DESC, AVGV DESC ;")
+cursor.execute("select sess, round(AVG(loaded), 2) AS AVGV, round(SUM(loaded) * 1000 / 60 / 3.3, 0) AS mAh, ROUND(SUM(loaded * loaded / 3.4) * 60, 0) AS Joule from samples group by sess order by AVGV DESC, mAh DESC;")
 
 # Fetch all the rows from the result set
 rows = cursor.fetchall()
@@ -25,5 +26,5 @@ cursor.close()
 conn.close()
 
 # Print the data in a nicely formatted table
-headers = [column1_name, column2_name, column3_name]
+headers = [column1_name, column2_name, column3_name, column4_name]
 print(tabulate(rows, headers=headers))
