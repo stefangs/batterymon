@@ -6,7 +6,12 @@ import matplotlib.pyplot as plt
 import serial
 
 class Batt(object):
-  """Battery health app"""
+  """
+  Battery health tracking app.
+  
+  The app collects battery discharge data from a battery discharging device and stores and presents the collected data
+  
+  """
 
   def __connectDatabase(self):
     with open("connection.txt", "r") as file:
