@@ -1,3 +1,4 @@
+import sys
 import psycopg2
 import fire
 from tabulate import tabulate
@@ -48,8 +49,13 @@ class Batt(object):
     # Close the database connection
     conn.close()
 
-  def __insertSamples(self, samples):
+  def __insertSamples(self, sessionNr, samples, battery):
     conn, cursor = self.__connectDatabase()
+    try:
+      cursor.execute("INSERT INTO sessions (id, battery) VALUES (%s, %s)", 
+                  (sessionNr, battery))
+    except:
+      print("Failed to insert session", sessionNr)
     for sample in samples:
       session = int(sample[0])
       minutes = int(sample[1])
@@ -59,10 +65,10 @@ class Batt(object):
       try:
         cursor.execute("INSERT INTO samples (sess, minute, unloaded, loaded, resistance) VALUES (%s, %s, %s, %s, %s)", 
                        (session, minutes, unloaded, loaded, resistance))
-        print("inserted")
+        print(f"Inserted sample: {minutes}", end='\r')
       except:
         print("Failed to insert sample", minutes, "from session", session)
-
+    print()
     conn.commit()
     cursor.close()
     conn.close()
@@ -70,7 +76,12 @@ class Batt(object):
   
   def read(self, battery=0, port='COM3'):
     """NYI Reads a discharge session from serial port and inserts in database"""
-    ser = serial.Serial(port, 115200, timeout=5.0)
+    try:
+      ser = serial.Serial(port, 115200, timeout=5.0)
+    except:
+      exc_type, exc_value, exc_traceback = sys.exc_info()
+      print("Failed to open serial port", port, "Error:", exc_value)
+      return
 
     # Wait until sampler prints startup line
     str(ser.readline(), 'UTF-8')
@@ -96,7 +107,7 @@ class Batt(object):
 
     print(len(samples), "samples read from session", sessionNr)
 
-    self.__insertSamples(samples)
+    self.__insertSamples(sessionNr, samples, battery)
 
   def delete(self, session):
     """Delete a session"""
@@ -109,10 +120,13 @@ class Batt(object):
       return
     try:
       cursor.execute("delete from samples where sess=%s;", (session,))
+      deleted1 = cursor.rowcount
       cursor.execute("delete from sessions where id=%s;", (session,))
       conn.commit()
+      print("Deleted", deleted1, "samples")
     except:
-        print("Failed to delete session", session)
+        exc_type, exc_value, exc_traceback = sys.exc_info()
+        print("Failed to delete session", session, "Error:", exc_value)
     cursor.close()
     conn.close()
 
